@@ -43,6 +43,16 @@ def fetch_news_urls(query, num_articles=5):
 
     return links
 
+@st.cache_data
+def load_models_dynamic(urls1, urls2):
+    p_texts, p_corpus, p_dict = prepare_corpus(urls1)
+    y_texts, y_corpus, y_dict = prepare_corpus(urls2)
+
+    lda_p = run_lda(p_corpus, p_dict)
+    lda_y = run_lda(y_corpus, y_dict)
+
+    return p_texts, y_texts, lda_p, lda_y
+
 # pinarayi_urls = fetch_news_urls("Pinarayi Vijayan", 5)
 # yogi_urls = fetch_news_urls("Yogi Adityanath", 5)
 
