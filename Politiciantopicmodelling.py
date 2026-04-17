@@ -49,20 +49,20 @@ def fetch_news_urls(query, num_articles=5):
 query1 = st.text_input("Enter Politician 1", "Pinarayi Vijayan")
 query2 = st.text_input("Enter Politician 2", "Yogi Adityanath")
 
-if st.button("Fetch & Analyze", key="fetch_main_1"):
-    urls1 = fetch_news_urls(query1)
-    urls2 = fetch_news_urls(query2)
 
-    query1 = st.text_input("Enter Politician 1", "Pinarayi Vijayan")
-    query2 = st.text_input("Enter Politician 2", "Yogi Adityanath")
-
-if st.button("Fetch & Analyze", key="fetch_main_1"):
+if st.button("Fetch & Analyze", key="fetch_main"):
     urls1 = fetch_news_urls(query1)
     urls2 = fetch_news_urls(query2)
 
     p_texts, y_texts, lda_p, lda_y = load_models_dynamic(urls1, urls2)
 
     st.session_state["data"] = (p_texts, y_texts, lda_p, lda_y)
+
+if "data" not in st.session_state:
+    st.warning("Click 'Fetch & Analyze' to load data")
+    st.stop()
+
+p_texts, y_texts, lda_p, lda_y = st.session_state["data"]
 
 if "data" in st.session_state:
     p_texts, y_texts, lda_p, lda_y = st.session_state["data"]
