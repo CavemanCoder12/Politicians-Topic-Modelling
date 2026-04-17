@@ -27,22 +27,43 @@ nlp = spacy.load("en_core_web_sm")
 
 stop_words = set(stopwords.words('english'))
 
+import feedparser
+
+def fetch_news_urls(query, num_articles=5):
+    url = f"https://news.google.com/rss/search?q={query}&hl=en-IN&gl=IN&ceid=IN:en"
+    feed = feedparser.parse(url)
+
+    links = []
+    for entry in feed.entries[:num_articles]:
+        links.append(entry.link)
+
+    return links
+
+pinarayi_urls = fetch_news_urls("Pinarayi Vijayan", 5)
+yogi_urls = fetch_news_urls("Yogi Adityanath", 5)
+
+query1 = st.text_input("Enter Politician 1", "Pinarayi Vijayan")
+query2 = st.text_input("Enter Politician 2", "Yogi Adityanath")
+
+urls1 = fetch_news_urls(query1)
+urls2 = fetch_news_urls(query2)
+
 # -----------------------------
 # DATA
 # -----------------------------
-PINARAYI_URLS = [
-    "https://timesofindia.indiatimes.com/city/thiruvananthapuram/student-death-raises-caste-bias-concerns-says-cm-pinarayi-vijayan/articleshow/130267482.cms",
-    "https://www.ndtv.com/india-news/if-up-turns-into-kerala-pinarayi-vijayan-sneers-at-yogi-adityanath-2760326",
-    "https://www.ndtv.com/india-news/pinarayi-vijayan-inappropriate-kerala-chief-minister-on-yogi-adityanaths-up-kerala-remark-2781944",
-    "https://timesofindia.indiatimes.com/city/thiruvananthapuram/pinarayi-vijayan-slams-adityanath-over-his-remarks-on-kerala/articleshow/60960704.cms"
-]
+# PINARAYI_URLS = [
+#     "https://timesofindia.indiatimes.com/city/thiruvananthapuram/student-death-raises-caste-bias-concerns-says-cm-pinarayi-vijayan/articleshow/130267482.cms",
+#     "https://www.ndtv.com/india-news/if-up-turns-into-kerala-pinarayi-vijayan-sneers-at-yogi-adityanath-2760326",
+#     "https://www.ndtv.com/india-news/pinarayi-vijayan-inappropriate-kerala-chief-minister-on-yogi-adityanaths-up-kerala-remark-2781944",
+#     "https://timesofindia.indiatimes.com/city/thiruvananthapuram/pinarayi-vijayan-slams-adityanath-over-his-remarks-on-kerala/articleshow/60960704.cms"
+# ]
 
-YOGI_URLS = [
-    "https://indiatimes.com/trending/nations-safety-lies-in-eliminating-the-wicked-uttar-pradesh-chief-minister-yogi-adityanath-669206.html",
-    "https://indiatimes.com/trending/ramayana-and-mahabharatas-villains-reappear-in-modern-times-says-cm-yogi-during-lord-rams-rajtilak-672556.html",
-    "https://timesofindia.indiatimes.com/city/lucknow/pappu-tappu-appu-of-india-bloc-cant-see-development-under-pm-modi-yogi/articleshow/125061291.cms",
-    "https://indianexpress.com/article/india/up-cm-yogi-adityanath-uses-love-jihad-to-target-left-in-kerala-4874887/"
-]
+# YOGI_URLS = [
+#     "https://indiatimes.com/trending/nations-safety-lies-in-eliminating-the-wicked-uttar-pradesh-chief-minister-yogi-adityanath-669206.html",
+#     "https://indiatimes.com/trending/ramayana-and-mahabharatas-villains-reappear-in-modern-times-says-cm-yogi-during-lord-rams-rajtilak-672556.html",
+#     "https://timesofindia.indiatimes.com/city/lucknow/pappu-tappu-appu-of-india-bloc-cant-see-development-under-pm-modi-yogi/articleshow/125061291.cms",
+#     "https://indianexpress.com/article/india/up-cm-yogi-adityanath-uses-love-jihad-to-target-left-in-kerala-4874887/"
+# ]
 
 # -----------------------------
 # FUNCTIONS
@@ -91,7 +112,8 @@ def run_lda(corpus, dictionary, num_topics=4):
 # -----------------------------
 # CACHE (IMPORTANT)
 # -----------------------------
-@st.cache_resource
+@st.cache_data
+def load_models_dynamic(urls1, urls2):
 def load_models():
     p_texts, p_corpus, p_dict = prepare_corpus(PINARAYI_URLS)
     y_texts, y_corpus, y_dict = prepare_corpus(YOGI_URLS)
