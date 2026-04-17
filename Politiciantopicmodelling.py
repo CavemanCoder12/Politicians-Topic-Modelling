@@ -107,7 +107,7 @@ def load_models_dynamic(texts1, texts2):
 # UI
 # -----------------------------
 st.set_page_config(page_title="Topic Modelling Dashboard", layout="wide")
-st.title("🧠 Political Topic Analysis (News API Powered)")
+st.title("Political Topic Analysis (News API Powered)")
 
 q1 = st.text_input("Enter Politician 1", "Pinarayi Vijayan")
 q2 = st.text_input("Enter Politician 2", "Yogi Adityanath")
