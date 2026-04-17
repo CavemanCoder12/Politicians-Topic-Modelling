@@ -1,5 +1,3 @@
-import pandas as pd
-import numpy as np
 import nltk
 import re
 import streamlit as st
@@ -40,7 +38,7 @@ except:
 stop_words = set(stopwords.words('english'))
 
 # -----------------------------
-# CORE FUNCTIONS (DEFINE FIRST!)
+# CORE FUNCTIONS (ORDER MATTERS)
 # -----------------------------
 def extract_article(url):
     try:
@@ -88,9 +86,6 @@ def run_lda(corpus, dictionary, num_topics=4):
         random_state=42
     )
 
-# -----------------------------
-# CACHE FUNCTION (AFTER DEPENDENCIES!)
-# -----------------------------
 @st.cache_data
 def load_models_dynamic(urls1, urls2):
     p_texts, p_corpus, p_dict = prepare_corpus(urls1)
@@ -101,9 +96,6 @@ def load_models_dynamic(urls1, urls2):
 
     return p_texts, y_texts, lda_p, lda_y
 
-# -----------------------------
-# NEWS FETCHING
-# -----------------------------
 def fetch_news_urls(query, num_articles=5):
     try:
         query = quote(query)
@@ -114,43 +106,35 @@ def fetch_news_urls(query, num_articles=5):
         return []
 
 # -----------------------------
-# UI CONFIG
+# UI
 # -----------------------------
-st.set_page_config(page_title="Political Topic Analysis", layout="wide")
-st.title("🧠 Political Speech Topic Analysis Dashboard")
+st.set_page_config(page_title="Topic Modelling Dashboard", layout="wide")
+st.title("🧠 Political Speech Topic Analysis")
 
-# -----------------------------
-# INPUT
-# -----------------------------
 query1 = st.text_input("Enter Politician 1", "Pinarayi Vijayan")
 query2 = st.text_input("Enter Politician 2", "Yogi Adityanath")
 
+# ONLY place where model runs
 if st.button("Fetch & Analyze", key="fetch_main"):
-    with st.spinner("Fetching news and running topic modeling..."):
+    with st.spinner("Fetching data..."):
         urls1 = fetch_news_urls(query1)
         urls2 = fetch_news_urls(query2)
 
         if not urls1 or not urls2:
-            st.error("Could not fetch articles. Try different keywords.")
+            st.error("Could not fetch articles")
         else:
             p_texts, y_texts, lda_p, lda_y = load_models_dynamic(urls1, urls2)
+            st.session_state["data"] = (p_texts, y_texts, lda_p, lda_y)
 
-            if lda_p is None or lda_y is None:
-                st.error("Not enough valid data to build topics.")
-            else:
-                st.session_state["data"] = (p_texts, y_texts, lda_p, lda_y)
-
-# -----------------------------
-# SESSION CHECK
-# -----------------------------
+# STOP until button clicked
 if "data" not in st.session_state:
-    st.info("Enter names and click 'Fetch & Analyze'")
+    st.info("Enter names and click Fetch & Analyze")
     st.stop()
 
 p_texts, y_texts, lda_p, lda_y = st.session_state["data"]
 
 # -----------------------------
-# VISUAL FUNCTIONS
+# VISUALS
 # -----------------------------
 def generate_wordcloud(texts, title):
     all_words = " ".join([" ".join(text) for text in texts])
@@ -162,19 +146,10 @@ def generate_wordcloud(texts, title):
     ax.set_title(title)
     st.pyplot(fig)
 
-def show_topic_bar(model, title):
-    topics = model.show_topics(num_topics=4, formatted=False)
-
-    words, weights = [], []
-    for topic in topics:
-        for word, weight in topic[1]:
-            words.append(word)
-            weights.append(weight)
-
-    fig, ax = plt.subplots()
-    ax.barh(words, weights)
-    ax.set_title(title)
-    st.pyplot(fig)
+def show_topics(model):
+    for i, topic in model.print_topics(-1):
+        st.write(f"### Topic {i}")
+        st.write(topic)
 
 def venn_diagram(p_texts, y_texts):
     p_words = set(word for text in p_texts for word in text)
@@ -185,24 +160,17 @@ def venn_diagram(p_texts, y_texts):
     st.pyplot(fig)
 
 # -----------------------------
-# UI SECTIONS
+# NAVIGATION
 # -----------------------------
 section = st.sidebar.radio("Select View", [
     "Topics",
     "Word Clouds",
-    "Topic Importance",
     "Comparison"
 ])
 
 if section == "Topics":
-    option = st.selectbox("Select Politician", ["Politician 1", "Politician 2"])
-
-    def show_topics(model):
-        for i, topic in model.print_topics(-1):
-            st.write(f"### Topic {i}")
-            st.write(topic)
-
-    show_topics(lda_p if option == "Politician 1" else lda_y)
+    choice = st.selectbox("Select", ["Politician 1", "Politician 2"])
+    show_topics(lda_p if choice == "Politician 1" else lda_y)
 
 elif section == "Word Clouds":
     col1, col2 = st.columns(2)
@@ -211,13 +179,5 @@ elif section == "Word Clouds":
     with col2:
         generate_wordcloud(y_texts, "Politician 2")
 
-elif section == "Topic Importance":
-    col1, col2 = st.columns(2)
-    with col1:
-        show_topic_bar(lda_p, "Politician 1")
-    with col2:
-        show_topic_bar(lda_y, "Politician 2")
-
 elif section == "Comparison":
-    st.subheader("Vocabulary Overlap")
     venn_diagram(p_texts, y_texts)
