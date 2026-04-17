@@ -18,87 +18,36 @@ from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 from matplotlib_venn import venn2
 
+import feedparser
+from urllib.parse import quote
+
 # -----------------------------
 # SETUP (CLOUD SAFE)
 # -----------------------------
 nltk.download('stopwords', quiet=True)
 
-nlp = spacy.load("en_core_web_sm")
+# FIXED spaCy loading
+try:
+    nlp = spacy.load("en_core_web_sm")
+except:
+    subprocess.run(
+        [sys.executable, "-m", "spacy", "download", "en_core_web_sm"],
+        stdout=subprocess.DEVNULL
+    )
+    nlp = spacy.load("en_core_web_sm")
 
 stop_words = set(stopwords.words('english'))
-
-import feedparser
-
-from urllib.parse import quote
-
-def fetch_news_urls(query, num_articles=5):
-    query = quote(query)  # 🔥 FIX: encode spaces
-    url = f"https://news.google.com/rss/search?q={query}&hl=en-IN&gl=IN&ceid=IN:en"
-    
-    feed = feedparser.parse(url)
-
-    links = []
-    for entry in feed.entries[:num_articles]:
-        links.append(entry.link)
-
-    return links
-
-@st.cache_data
-def load_models_dynamic(urls1, urls2):
-    p_texts, p_corpus, p_dict = prepare_corpus(urls1)
-    y_texts, y_corpus, y_dict = prepare_corpus(urls2)
-
-    lda_p = run_lda(p_corpus, p_dict)
-    lda_y = run_lda(y_corpus, y_dict)
-
-    return p_texts, y_texts, lda_p, lda_y
-
-# pinarayi_urls = fetch_news_urls("Pinarayi Vijayan", 5)
-# yogi_urls = fetch_news_urls("Yogi Adityanath", 5)
-
-query1 = st.text_input("Enter Politician 1", "Pinarayi Vijayan")
-query2 = st.text_input("Enter Politician 2", "Yogi Adityanath")
-
-
-if st.button("Fetch & Analyze", key="fetch_main"):
-    urls1 = fetch_news_urls(query1)
-    urls2 = fetch_news_urls(query2)
-
-    p_texts, y_texts, lda_p, lda_y = load_models_dynamic(urls1, urls2)
-
-    st.session_state["data"] = (p_texts, y_texts, lda_p, lda_y)
-
-if "data" not in st.session_state:
-    st.warning("Click 'Fetch & Analyze' to load data")
-    st.stop()
-
-p_texts, y_texts, lda_p, lda_y = st.session_state["data"]
-
-if "data" in st.session_state:
-    p_texts, y_texts, lda_p, lda_y = st.session_state["data"]
-else:
-    st.warning("Click 'Fetch & Analyze' to load data")
-    st.stop()
-# -----------------------------
-# DATA
-# -----------------------------
-# PINARAYI_URLS = [
-#     "https://timesofindia.indiatimes.com/city/thiruvananthapuram/student-death-raises-caste-bias-concerns-says-cm-pinarayi-vijayan/articleshow/130267482.cms",
-#     "https://www.ndtv.com/india-news/if-up-turns-into-kerala-pinarayi-vijayan-sneers-at-yogi-adityanath-2760326",
-#     "https://www.ndtv.com/india-news/pinarayi-vijayan-inappropriate-kerala-chief-minister-on-yogi-adityanaths-up-kerala-remark-2781944",
-#     "https://timesofindia.indiatimes.com/city/thiruvananthapuram/pinarayi-vijayan-slams-adityanath-over-his-remarks-on-kerala/articleshow/60960704.cms"
-# ]
-
-# YOGI_URLS = [
-#     "https://indiatimes.com/trending/nations-safety-lies-in-eliminating-the-wicked-uttar-pradesh-chief-minister-yogi-adityanath-669206.html",
-#     "https://indiatimes.com/trending/ramayana-and-mahabharatas-villains-reappear-in-modern-times-says-cm-yogi-during-lord-rams-rajtilak-672556.html",
-#     "https://timesofindia.indiatimes.com/city/lucknow/pappu-tappu-appu-of-india-bloc-cant-see-development-under-pm-modi-yogi/articleshow/125061291.cms",
-#     "https://indianexpress.com/article/india/up-cm-yogi-adityanath-uses-love-jihad-to-target-left-in-kerala-4874887/"
-# ]
 
 # -----------------------------
 # FUNCTIONS
 # -----------------------------
+def fetch_news_urls(query, num_articles=5):
+    query = quote(query)
+    url = f"https://news.google.com/rss/search?q={query}&hl=en-IN&gl=IN&ceid=IN:en"
+    
+    feed = feedparser.parse(url)
+    return [entry.link for entry in feed.entries[:num_articles]]
+
 def extract_article(url):
     try:
         article = Article(url)
@@ -112,12 +61,11 @@ def preprocess(text):
     text = re.sub(r'\W', ' ', text)
     text = text.lower()
     doc = nlp(text)
-    tokens = [
+    return [
         token.lemma_
         for token in doc
         if token.text not in stop_words and len(token.text) > 3
     ]
-    return tokens
 
 def prepare_corpus(urls):
     texts = []
@@ -140,9 +88,6 @@ def run_lda(corpus, dictionary, num_topics=4):
         random_state=42
     )
 
-# -----------------------------
-# CACHE (IMPORTANT)
-# -----------------------------
 @st.cache_data
 def load_models_dynamic(urls1, urls2):
     p_texts, p_corpus, p_dict = prepare_corpus(urls1)
@@ -153,8 +98,36 @@ def load_models_dynamic(urls1, urls2):
 
     return p_texts, y_texts, lda_p, lda_y
 
+# -----------------------------
+# UI CONFIG
+# -----------------------------
+st.set_page_config(page_title="Political Topic Analysis", layout="wide")
 
-p_texts, y_texts, lda_p, lda_y = load_models_dynamic(urls1, urls2)
+st.title("🧠 Political Speech Topic Analysis Dashboard")
+
+# -----------------------------
+# INPUT
+# -----------------------------
+query1 = st.text_input("Enter Politician 1", "Pinarayi Vijayan")
+query2 = st.text_input("Enter Politician 2", "Yogi Adityanath")
+
+if st.button("Fetch & Analyze", key="fetch_main"):
+    with st.spinner("Fetching articles and running analysis..."):
+        urls1 = fetch_news_urls(query1)
+        urls2 = fetch_news_urls(query2)
+
+        p_texts, y_texts, lda_p, lda_y = load_models_dynamic(urls1, urls2)
+
+        st.session_state["data"] = (p_texts, y_texts, lda_p, lda_y)
+
+# -----------------------------
+# SESSION CHECK
+# -----------------------------
+if "data" not in st.session_state:
+    st.warning("Click 'Fetch & Analyze' to load data")
+    st.stop()
+
+p_texts, y_texts, lda_p, lda_y = st.session_state["data"]
 
 # -----------------------------
 # VISUAL FUNCTIONS
@@ -172,9 +145,7 @@ def generate_wordcloud(texts, title):
 def show_topic_bar(model, title):
     topics = model.show_topics(num_topics=4, formatted=False)
 
-    words = []
-    weights = []
-
+    words, weights = [], []
     for topic in topics:
         for word, weight in topic[1]:
             words.append(word)
@@ -186,23 +157,16 @@ def show_topic_bar(model, title):
     st.pyplot(fig)
 
 def venn_diagram(p_texts, y_texts):
-    p_words = set([word for text in p_texts for word in text])
-    y_words = set([word for text in y_texts for word in text])
+    p_words = set(word for text in p_texts for word in text)
+    y_words = set(word for text in y_texts for word in text)
 
     fig, ax = plt.subplots()
-    venn2([p_words, y_words], set_labels=("Pinarayi", "Yogi"))
+    venn2([p_words, y_words], set_labels=("Politician 1", "Politician 2"))
     st.pyplot(fig)
 
 # -----------------------------
-# UI CONFIG
+# UI SECTIONS
 # -----------------------------
-st.set_page_config(
-    page_title="Political Topic Analysis",
-    layout="wide"
-)
-
-st.title("Political Speech Topic Analysis Dashboard")
-
 section = st.sidebar.radio("Select View", [
     "Topics",
     "Word Clouds",
@@ -210,39 +174,29 @@ section = st.sidebar.radio("Select View", [
     "Comparison"
 ])
 
-# -----------------------------
-# UI SECTIONS
-# -----------------------------
 if section == "Topics":
-    option = st.selectbox(
-        "Select Politician",
-        ["Pinarayi Vijayan", "Yogi Adityanath"]
-    )
+    option = st.selectbox("Select Politician", ["Politician 1", "Politician 2"])
 
     def show_topics(model):
-        topics = model.print_topics(-1)
-        for i, topic in topics:
+        for i, topic in model.print_topics(-1):
             st.write(f"### Topic {i}")
             st.write(topic)
 
-    if option == "Pinarayi Vijayan":
-        show_topics(lda_p)
-    else:
-        show_topics(lda_y)
+    show_topics(lda_p if option == "Politician 1" else lda_y)
 
 elif section == "Word Clouds":
     col1, col2 = st.columns(2)
     with col1:
-        generate_wordcloud(p_texts, "Pinarayi Vijayan")
+        generate_wordcloud(p_texts, "Politician 1")
     with col2:
-        generate_wordcloud(y_texts, "Yogi Adityanath")
+        generate_wordcloud(y_texts, "Politician 2")
 
 elif section == "Topic Importance":
     col1, col2 = st.columns(2)
     with col1:
-        show_topic_bar(lda_p, "Pinarayi Vijayan")
+        show_topic_bar(lda_p, "Politician 1")
     with col2:
-        show_topic_bar(lda_y, "Yogi Adityanath")
+        show_topic_bar(lda_y, "Politician 2")
 
 elif section == "Comparison":
     st.subheader("Vocabulary Overlap")
