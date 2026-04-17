@@ -29,8 +29,12 @@ stop_words = set(stopwords.words('english'))
 
 import feedparser
 
+from urllib.parse import quote
+
 def fetch_news_urls(query, num_articles=5):
+    query = quote(query)  # 🔥 FIX: encode spaces
     url = f"https://news.google.com/rss/search?q={query}&hl=en-IN&gl=IN&ceid=IN:en"
+    
     feed = feedparser.parse(url)
 
     links = []
@@ -49,7 +53,22 @@ if st.button("Fetch & Analyze"):
     urls1 = fetch_news_urls(query1)
     urls2 = fetch_news_urls(query2)
 
+    query1 = st.text_input("Enter Politician 1", "Pinarayi Vijayan")
+    query2 = st.text_input("Enter Politician 2", "Yogi Adityanath")
+
+if st.button("Fetch & Analyze"):
+    urls1 = fetch_news_urls(query1)
+    urls2 = fetch_news_urls(query2)
+
     p_texts, y_texts, lda_p, lda_y = load_models_dynamic(urls1, urls2)
+
+    st.session_state["data"] = (p_texts, y_texts, lda_p, lda_y)
+
+if "data" in st.session_state:
+    p_texts, y_texts, lda_p, lda_y = st.session_state["data"]
+else:
+    st.warning("Click 'Fetch & Analyze' to load data")
+    st.stop()
 # -----------------------------
 # DATA
 # -----------------------------
