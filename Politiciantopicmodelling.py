@@ -148,7 +148,7 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("🧠 Political Speech Topic Analysis Dashboard")
+st.title("Political Speech Topic Analysis Dashboard")
 
 section = st.sidebar.radio("Select View", [
     "Topics",
