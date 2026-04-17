@@ -18,15 +18,16 @@ from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 from matplotlib_venn import venn2
 
+# Dynamic news
 import feedparser
 from urllib.parse import quote
 
 # -----------------------------
-# SETUP (CLOUD SAFE)
+# SETUP
 # -----------------------------
 nltk.download('stopwords', quiet=True)
 
-# FIXED spaCy loading
+# Safe spaCy loading
 try:
     nlp = spacy.load("en_core_web_sm")
 except:
@@ -42,11 +43,13 @@ stop_words = set(stopwords.words('english'))
 # FUNCTIONS
 # -----------------------------
 def fetch_news_urls(query, num_articles=5):
-    query = quote(query)
-    url = f"https://news.google.com/rss/search?q={query}&hl=en-IN&gl=IN&ceid=IN:en"
-    
-    feed = feedparser.parse(url)
-    return [entry.link for entry in feed.entries[:num_articles]]
+    try:
+        query = quote(query)
+        url = f"https://news.google.com/rss/search?q={query}&hl=en-IN&gl=IN&ceid=IN:en"
+        feed = feedparser.parse(url)
+        return [entry.link for entry in feed.entries[:num_articles]]
+    except:
+        return []
 
 def extract_article(url):
     try:
@@ -72,7 +75,11 @@ def prepare_corpus(urls):
     for url in urls:
         article = extract_article(url)
         tokens = preprocess(article)
-        texts.append(tokens)
+        if tokens:  # avoid empty docs
+            texts.append(tokens)
+
+    if not texts:
+        return [], [], None
 
     dictionary = corpora.Dictionary(texts)
     corpus = [dictionary.doc2bow(text) for text in texts]
@@ -80,6 +87,8 @@ def prepare_corpus(urls):
     return texts, corpus, dictionary
 
 def run_lda(corpus, dictionary, num_topics=4):
+    if not corpus or dictionary is None:
+        return None
     return LdaModel(
         corpus=corpus,
         id2word=dictionary,
@@ -112,19 +121,25 @@ query1 = st.text_input("Enter Politician 1", "Pinarayi Vijayan")
 query2 = st.text_input("Enter Politician 2", "Yogi Adityanath")
 
 if st.button("Fetch & Analyze", key="fetch_main"):
-    with st.spinner("Fetching articles and running analysis..."):
+    with st.spinner("Fetching news and running topic modeling..."):
         urls1 = fetch_news_urls(query1)
         urls2 = fetch_news_urls(query2)
 
-        p_texts, y_texts, lda_p, lda_y = load_models_dynamic(urls1, urls2)
+        if not urls1 or not urls2:
+            st.error("Could not fetch articles. Try different keywords.")
+        else:
+            p_texts, y_texts, lda_p, lda_y = load_models_dynamic(urls1, urls2)
 
-        st.session_state["data"] = (p_texts, y_texts, lda_p, lda_y)
+            if lda_p is None or lda_y is None:
+                st.error("Not enough valid data to build topics.")
+            else:
+                st.session_state["data"] = (p_texts, y_texts, lda_p, lda_y)
 
 # -----------------------------
 # SESSION CHECK
 # -----------------------------
 if "data" not in st.session_state:
-    st.warning("Click 'Fetch & Analyze' to load data")
+    st.info("Enter names and click 'Fetch & Analyze'")
     st.stop()
 
 p_texts, y_texts, lda_p, lda_y = st.session_state["data"]
