@@ -25,7 +25,6 @@ from urllib.parse import quote
 # -----------------------------
 nltk.download('stopwords', quiet=True)
 
-# Safe spaCy loading
 try:
     nlp = spacy.load("en_core_web_sm")
 except:
@@ -38,7 +37,7 @@ except:
 stop_words = set(stopwords.words('english'))
 
 # -----------------------------
-# CORE FUNCTIONS (ORDER MATTERS)
+# CORE FUNCTIONS
 # -----------------------------
 def extract_article(url):
     try:
@@ -50,8 +49,7 @@ def extract_article(url):
         return ""
 
 def preprocess(text):
-    text = re.sub(r'\W', ' ', text)
-    text = text.lower()
+    text = re.sub(r'\W', ' ', text.lower())
     doc = nlp(text)
     return [
         token.lemma_
@@ -75,18 +73,17 @@ def prepare_corpus(urls):
 
     return texts, corpus, dictionary
 
-def run_lda(corpus, dictionary, num_topics=4):
+def run_lda(corpus, dictionary):
     if not corpus or dictionary is None:
         return None
     return LdaModel(
         corpus=corpus,
         id2word=dictionary,
-        num_topics=num_topics,
+        num_topics=4,
         passes=10,
         random_state=42
     )
 
-@st.cache_data
 def load_models_dynamic(urls1, urls2):
     p_texts, p_corpus, p_dict = prepare_corpus(urls1)
     y_texts, y_corpus, y_dict = prepare_corpus(urls2)
@@ -114,29 +111,43 @@ st.title("🧠 Political Speech Topic Analysis")
 query1 = st.text_input("Enter Politician 1", "Pinarayi Vijayan")
 query2 = st.text_input("Enter Politician 2", "Yogi Adityanath")
 
-# ONLY place where model runs
 if st.button("Fetch & Analyze", key="fetch_main"):
-    with st.spinner("Fetching data..."):
+    with st.spinner("Fetching and processing..."):
         urls1 = fetch_news_urls(query1)
         urls2 = fetch_news_urls(query2)
 
         if not urls1 or not urls2:
-            st.error("Could not fetch articles")
+            st.error("Could not fetch articles. Try different keywords.")
         else:
             p_texts, y_texts, lda_p, lda_y = load_models_dynamic(urls1, urls2)
-            st.session_state["data"] = (p_texts, y_texts, lda_p, lda_y)
 
-# STOP until button clicked
+            if lda_p is None or lda_y is None:
+                st.error("Not enough usable content for topic modelling.")
+            else:
+                st.session_state["data"] = (p_texts, y_texts, lda_p, lda_y)
+
+# Stop until data is ready
 if "data" not in st.session_state:
-    st.info("Enter names and click Fetch & Analyze")
+    st.info("Enter names and click 'Fetch & Analyze'")
     st.stop()
 
 p_texts, y_texts, lda_p, lda_y = st.session_state["data"]
 
 # -----------------------------
-# VISUALS
+# VISUAL FUNCTIONS
 # -----------------------------
+def show_topics(model):
+    if model is None:
+        st.warning("Not enough data to generate topics")
+        return
+    for i, topic in model.print_topics(-1):
+        st.write(f"### Topic {i}")
+        st.write(topic)
+
 def generate_wordcloud(texts, title):
+    if not texts:
+        st.warning(f"No data available for {title}")
+        return
     all_words = " ".join([" ".join(text) for text in texts])
     wc = WordCloud(width=800, height=400).generate(all_words)
 
@@ -146,12 +157,10 @@ def generate_wordcloud(texts, title):
     ax.set_title(title)
     st.pyplot(fig)
 
-def show_topics(model):
-    for i, topic in model.print_topics(-1):
-        st.write(f"### Topic {i}")
-        st.write(topic)
-
 def venn_diagram(p_texts, y_texts):
+    if not p_texts or not y_texts:
+        st.warning("Not enough data for comparison")
+        return
     p_words = set(word for text in p_texts for word in text)
     y_words = set(word for text in y_texts for word in text)
 
