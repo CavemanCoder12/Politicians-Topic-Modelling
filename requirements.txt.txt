@@ -1,0 +1,11 @@
+streamlit
+pandas
+numpy
+nltk
+spacy
+gensim
+newspaper3k
+lxml_html_clean
+wordcloud
+matplotlib
+matplotlib-venn
