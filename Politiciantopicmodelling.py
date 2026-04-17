@@ -7,8 +7,6 @@ Original file is located at
     https://colab.research.google.com/drive/1Q9l_2TjDqkoY1eJCifbt_Ppbs2mmII5O
 """
 
-!pkill -f streamlit
-!pkill -f lt
 
 get_ipython().system_raw('streamlit run streamlit_app.py &')
 
