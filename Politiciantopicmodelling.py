@@ -40,17 +40,8 @@ except:
 stop_words = set(stopwords.words('english'))
 
 # -----------------------------
-# FUNCTIONS
+# CORE FUNCTIONS (DEFINE FIRST!)
 # -----------------------------
-def fetch_news_urls(query, num_articles=5):
-    try:
-        query = quote(query)
-        url = f"https://news.google.com/rss/search?q={query}&hl=en-IN&gl=IN&ceid=IN:en"
-        feed = feedparser.parse(url)
-        return [entry.link for entry in feed.entries[:num_articles]]
-    except:
-        return []
-
 def extract_article(url):
     try:
         article = Article(url)
@@ -75,7 +66,7 @@ def prepare_corpus(urls):
     for url in urls:
         article = extract_article(url)
         tokens = preprocess(article)
-        if tokens:  # avoid empty docs
+        if tokens:
             texts.append(tokens)
 
     if not texts:
@@ -97,6 +88,9 @@ def run_lda(corpus, dictionary, num_topics=4):
         random_state=42
     )
 
+# -----------------------------
+# CACHE FUNCTION (AFTER DEPENDENCIES!)
+# -----------------------------
 @st.cache_data
 def load_models_dynamic(urls1, urls2):
     p_texts, p_corpus, p_dict = prepare_corpus(urls1)
@@ -108,10 +102,21 @@ def load_models_dynamic(urls1, urls2):
     return p_texts, y_texts, lda_p, lda_y
 
 # -----------------------------
+# NEWS FETCHING
+# -----------------------------
+def fetch_news_urls(query, num_articles=5):
+    try:
+        query = quote(query)
+        url = f"https://news.google.com/rss/search?q={query}&hl=en-IN&gl=IN&ceid=IN:en"
+        feed = feedparser.parse(url)
+        return [entry.link for entry in feed.entries[:num_articles]]
+    except:
+        return []
+
+# -----------------------------
 # UI CONFIG
 # -----------------------------
 st.set_page_config(page_title="Political Topic Analysis", layout="wide")
-
 st.title("🧠 Political Speech Topic Analysis Dashboard")
 
 # -----------------------------
