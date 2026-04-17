@@ -49,14 +49,14 @@ def fetch_news_urls(query, num_articles=5):
 query1 = st.text_input("Enter Politician 1", "Pinarayi Vijayan")
 query2 = st.text_input("Enter Politician 2", "Yogi Adityanath")
 
-if st.button("Fetch & Analyze"):
+if st.button("Fetch & Analyze", key="fetch_main_1"):
     urls1 = fetch_news_urls(query1)
     urls2 = fetch_news_urls(query2)
 
     query1 = st.text_input("Enter Politician 1", "Pinarayi Vijayan")
     query2 = st.text_input("Enter Politician 2", "Yogi Adityanath")
 
-if st.button("Fetch & Analyze"):
+if st.button("Fetch & Analyze", key="fetch_main_2"):
     urls1 = fetch_news_urls(query1)
     urls2 = fetch_news_urls(query2)
 
