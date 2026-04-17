@@ -50,13 +50,11 @@ def fetch_news_articles(query, num_articles=5):
 
     articles = []
 
-    if data.get("status") == "ok":
-        for item in data.get("articles", []):
-            text = (
-                (item.get("title") or "") + " " +
-                (item.get("description") or "") + " " +
-                (item.get("content") or "")
-            )
+    if data["status"] == "ok":
+        for item in data["articles"]:
+            text = (item.get("title", "") + " " +
+                    item.get("description", "") + " " +
+                    item.get("content", ""))
             if len(text) > 100:
                 articles.append(text)
 
@@ -123,30 +121,12 @@ if st.button("Fetch & Analyze"):
             st.error("No articles found. Try different keywords.")
         else:
             p_texts, y_texts, lda_p, lda_y = load_models_dynamic(texts1, texts2)
+            st.session_state["data"] = (p_texts, y_texts, lda_p, lda_y)
 
-            if lda_p is None or lda_y is None:
-                st.error("Not enough usable data for topic modelling.")
-            else:
-                st.session_state["data"] = (p_texts, y_texts, lda_p, lda_y)
-
-# Stop until data exists
 if "data" not in st.session_state:
-    st.info("Enter names and click 'Fetch & Analyze'")
     st.stop()
 
 p_texts, y_texts, lda_p, lda_y = st.session_state["data"]
-
-# -----------------------------
-# INSIGHTS (CORRECT PLACEMENT)
-# -----------------------------
-st.subheader("Key Insights")
-
-if p_texts and y_texts:
-    st.write("Politician 1 focuses more on:", p_texts[0][:5])
-    st.write("Politician 2 focuses more on:", y_texts[0][:5])
-    st.write(f"Articles fetched: {len(p_texts)} vs {len(y_texts)}")
-else:
-    st.warning("Not enough data for insights")
 
 # -----------------------------
 # VISUALS
@@ -156,11 +136,10 @@ def show_topics(model):
         st.warning("Not enough data")
         return
     for i, topic in model.print_topics():
-        st.write(f"Topic {i}: {topic}")
+        st.write(topic)
 
 def wordcloud(texts):
     if not texts:
-        st.warning("No data for wordcloud")
         return
     wc = WordCloud().generate(" ".join([" ".join(t) for t in texts]))
     plt.imshow(wc)
@@ -169,10 +148,9 @@ def wordcloud(texts):
 
 def venn(p, y):
     if not p or not y:
-        st.warning("Not enough data for comparison")
         return
     fig, ax = plt.subplots()
-    venn2([set(sum(p, [])), set(sum(y, []))], ("Politician 1", "Politician 2"))
+    venn2([set(sum(p, [])), set(sum(y, []))], ("P1", "P2"))
     st.pyplot(fig)
 
 view = st.sidebar.selectbox("View", ["Topics", "Wordcloud", "Compare"])
