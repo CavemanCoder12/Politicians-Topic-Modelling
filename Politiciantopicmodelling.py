@@ -4,6 +4,7 @@ import nltk
 import re
 import streamlit as st
 import subprocess
+import sys
 
 # NLP
 import spacy
@@ -22,14 +23,18 @@ from matplotlib_venn import venn2
 # -----------------------------
 nltk.download('stopwords', quiet=True)
 
-try:
-    nlp = spacy.load("en_core_web_sm")
-except:
-    subprocess.run(
-        ["python", "-m", "spacy", "download", "en_core_web_sm"],
-        stdout=subprocess.DEVNULL
-    )
-    nlp = spacy.load("en_core_web_sm")
+@st.cache_resource
+def load_spacy():
+    try:
+        return spacy.load("en_core_web_sm")
+    except:
+        subprocess.run(
+            [sys.executable, "-m", "spacy", "download", "en_core_web_sm"],
+            stdout=subprocess.DEVNULL
+        )
+        return spacy.load("en_core_web_sm")
+
+nlp = load_spacy()
 
 stop_words = set(stopwords.words('english'))
 
