@@ -94,6 +94,13 @@ def run_lda(corpus, dictionary):
         random_state=42
     )
 
+st.subheader("Key Insight")
+
+st.write("Politician 1 focuses more on:", p_texts[0][:5])
+st.write("Politician 2 focuses more on:", y_texts[0][:5])
+
+st.write(f"Articles fetched: {len(p_texts)} vs {len(y_texts)}")
+
 def load_models_dynamic(texts1, texts2):
     p_texts, p_corpus, p_dict = prepare_corpus(texts1)
     y_texts, y_corpus, y_dict = prepare_corpus(texts2)
