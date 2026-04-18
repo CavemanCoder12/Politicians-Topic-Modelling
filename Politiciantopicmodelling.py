@@ -27,13 +27,13 @@ def set_background(image_file):
         data = base64.b64encode(f.read()).decode()
 
     page_bg = f"""
-    <style>
+<style>
 
 /* ========================= */
 /* BACKGROUND                */
 /* ========================= */
 
-.stApp::before {
+.stApp::before {{
     content: "";
     position: fixed;
     inset: 0;
@@ -41,93 +41,93 @@ def set_background(image_file):
     background-size: cover;
     filter: blur(3px);
     z-index: 0;
-}
+}}
 
-.stApp::after {
+.stApp::after {{
     content: "";
     position: fixed;
     inset: 0;
     background: rgba(255, 255, 255, 0.8);
     z-index: 1;
-}
+}}
 
-.stApp > * {
+.stApp > * {{
     position: relative;
     z-index: 2;
-}
+}}
 
 /* ========================= */
 /* MAIN TEXT (DARK)          */
 /* ========================= */
 
-h1, h2, h3, h4, h5, h6, p, span {
+h1, h2, h3, h4, h5, h6, p, span {{
     color: #111111 !important;
-}
+}}
 
 /* IMPORTANT: don't override EVERYTHING */
-div {
+div {{
     color: inherit !important;
-}
+}}
 
 /* ========================= */
 /* SIDEBAR (WHITE TEXT)      */
 /* ========================= */
 
-section[data-testid="stSidebar"] {
+section[data-testid="stSidebar"] {{
     background-color: rgba(0, 0, 0, 0.25);
-}
+}}
 
-section[data-testid="stSidebar"] * {
+section[data-testid="stSidebar"] * {{
     color: white !important;
-}
+}}
 
 /* Sidebar label ("View") */
-section[data-testid="stSidebar"] label {
+section[data-testid="stSidebar"] label {{
     color: white !important;
-}
+}}
 
 /* ========================= */
 /* BUTTONS                   */
 /* ========================= */
 
-button[kind="primary"] {
+button[kind="primary"] {{
     color: white !important;
     background-color: #1f2937 !important;
     border-radius: 6px;
-}
+}}
 
-button * {
+button * {{
     color: white !important;
-}
+}}
 
 /* ========================= */
 /* INPUTS                    */
 /* ========================= */
 
-input, textarea {
+input, textarea {{
     color: white !important;
     background-color: #1f2937 !important;
-}
+}}
 
 /* ========================= */
 /* DROPDOWN (SELECTBOX)      */
 /* ========================= */
 
-div[data-baseweb="select"] * {
+div[data-baseweb="select"] * {{
     color: white !important;
     background-color: #1f2937 !important;
-}
+}}
 
 /* Selected value */
-div[data-baseweb="select"] span {
+div[data-baseweb="select"] span {{
     color: white !important;
-}
+}}
 
 /* Dropdown options */
-ul[role="listbox"] li {
+ul[role="listbox"] li {{
     color: white !important;
     background-color: #1f2937 !important;
-}
+}}
 
 </style>
     """
