@@ -66,6 +66,12 @@ def set_background(image_file):
     }}
     button, input, textarea, select {{
     color: white !important;
+    background-color: #1f2937 !important;  /* dark grey */
+    border-radius: 6px;
+    }}
+    div[data-baseweb="select"] * {{
+    color: white !important;
+    background-color: #1f2937 !important;
     }}
     </style>
     """
