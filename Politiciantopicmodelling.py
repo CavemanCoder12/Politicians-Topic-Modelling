@@ -21,38 +21,43 @@ from matplotlib_venn import venn2
 # BACKGROUND FUNCTION (FIXED)
 # -----------------------------
 def set_background(image_file):
+    import base64
+
     with open(image_file, "rb") as f:
         data = base64.b64encode(f.read()).decode()
 
     page_bg = f"""
     <style>
-    .stApp {{
-        position: relative;
-        z-index: 0;
-        background: transparent;
-    }}
 
+    /* Background image layer */
     .stApp::before {{
         content: "";
         position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-
-        background-image: url("data:image/jpg;base64,{data}");
+        inset: 0;
+        background: url("data:image/jpg;base64,{data}") no-repeat center center;
         background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        background-attachment: fixed;
-
         filter: blur(3px);
-        opacity: 0.4;
-
-        z-index: -1;
+        z-index: 0;
     }}
+
+    /* Fade overlay */
+    .stApp::after {{
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: rgba(255, 255, 255, 0.6);
+        z-index: 1;
+    }}
+
+    /* Bring actual app content ABOVE */
+    .stApp > * {{
+        position: relative;
+        z-index: 2;
+    }}
+
     </style>
     """
+
     st.markdown(page_bg, unsafe_allow_html=True)
 
 # -----------------------------
