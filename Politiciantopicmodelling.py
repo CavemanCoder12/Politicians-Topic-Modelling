@@ -65,7 +65,7 @@ def set_background(image_file):
         color: #111111 !important;
     }}
     button, input, textarea, select {{
-    color: black !important;
+    color: white !important;
     }}
     </style>
     """
