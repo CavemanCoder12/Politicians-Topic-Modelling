@@ -29,7 +29,7 @@ def set_background(image_file):
     page_bg = f"""
     <style>
 
-    /* Background image layer */
+    /* Background image */
     .stApp::before {{
         content: "";
         position: fixed;
@@ -40,19 +40,29 @@ def set_background(image_file):
         z-index: 0;
     }}
 
-    /* Fade overlay */
+    /* Light overlay */
     .stApp::after {{
         content: "";
         position: fixed;
         inset: 0;
-        background: rgba(255, 255, 255, 0.6);
+        background: rgba(255, 255, 255, 0.5);
         z-index: 1;
     }}
 
-    /* Bring actual app content ABOVE */
+    /* Bring content forward */
     .stApp > * {{
         position: relative;
         z-index: 2;
+    }}
+
+    /* 🔥 FIX TEXT VISIBILITY */
+    h1, h2, h3, h4, h5, h6, p, span, label, div {{
+        color: #111111 !important;
+    }}
+
+    /* Sidebar text */
+    section[data-testid="stSidebar"] * {{
+        color: #111111 !important;
     }}
 
     </style>
@@ -155,7 +165,7 @@ def load_models_dynamic(texts1, texts2):
 st.set_page_config(page_title="Topic Modelling Dashboard", layout="wide")
 set_background("background.jpg")
 
-st.title("🧠 Political Topic Analysis (News API Powered)")
+st.title(" Political Topic Analysis (News API Powered)")
 
 q1 = st.text_input("Enter Politician 1", "Pinarayi Vijayan")
 q2 = st.text_input("Enter Politician 2", "Yogi Adityanath")
