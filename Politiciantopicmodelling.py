@@ -16,6 +16,38 @@ from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 from matplotlib_venn import venn2
 
+import base64
+
+def set_background(image_file):
+    with open(image_file, "rb") as f:
+        data = base64.b64encode(f.read()).decode()
+
+    page_bg = f"""
+    <style>
+    .stApp {{
+        background-image: url("data:image/jpg;base64,{data}");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+    }}
+
+    /* Add overlay for fade effect */
+    .stApp::before {{
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.85);  /* adjust fade here */
+        z-index: -1;
+    }}
+    </style>
+    """
+
+    st.markdown(page_bg, unsafe_allow_html=True)
+
 # -----------------------------
 # SETUP
 # -----------------------------
@@ -107,6 +139,7 @@ def load_models_dynamic(texts1, texts2):
 # UI
 # -----------------------------
 st.set_page_config(page_title="Topic Modelling Dashboard", layout="wide")
+set_background("background.jpg")
 st.title("Political Topic Analysis (News API Powered)")
 
 q1 = st.text_input("Enter Politician 1", "Pinarayi Vijayan")
