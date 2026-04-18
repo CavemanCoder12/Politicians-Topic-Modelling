@@ -5,6 +5,7 @@ import subprocess
 import sys
 import spacy
 import requests
+import base64
 
 # NLP
 from gensim import corpora
@@ -16,8 +17,9 @@ from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 from matplotlib_venn import venn2
 
-import base64
-
+# -----------------------------
+# BACKGROUND FUNCTION (FIXED)
+# -----------------------------
 def set_background(image_file):
     with open(image_file, "rb") as f:
         data = base64.b64encode(f.read()).decode()
@@ -25,14 +27,11 @@ def set_background(image_file):
     page_bg = f"""
     <style>
     .stApp {{
-        background-image: url("data:image/jpg;base64,{data}");
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        background-attachment: fixed;
+        position: relative;
+        z-index: 0;
+        background: transparent;
     }}
 
-    /* Add overlay for fade effect */
     .stApp::before {{
         content: "";
         position: fixed;
@@ -40,12 +39,20 @@ def set_background(image_file):
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(255, 255, 255, 0.25);  /* adjust fade here */
+
+        background-image: url("data:image/jpg;base64,{data}");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+
+        filter: blur(3px);
+        opacity: 0.4;
+
         z-index: -1;
     }}
     </style>
     """
-
     st.markdown(page_bg, unsafe_allow_html=True)
 
 # -----------------------------
@@ -82,11 +89,13 @@ def fetch_news_articles(query, num_articles=5):
 
     articles = []
 
-    if data["status"] == "ok":
-        for item in data["articles"]:
-            text = (item.get("title", "") + " " +
-                    item.get("description", "") + " " +
-                    item.get("content", ""))
+    if data.get("status") == "ok":
+        for item in data.get("articles", []):
+            text = (
+                (item.get("title") or "") + " " +
+                (item.get("description") or "") + " " +
+                (item.get("content") or "")
+            )
             if len(text) > 100:
                 articles.append(text)
 
@@ -140,7 +149,8 @@ def load_models_dynamic(texts1, texts2):
 # -----------------------------
 st.set_page_config(page_title="Topic Modelling Dashboard", layout="wide")
 set_background("background.jpg")
-st.title("Political Topic Analysis (News API Powered)")
+
+st.title("🧠 Political Topic Analysis (News API Powered)")
 
 q1 = st.text_input("Enter Politician 1", "Pinarayi Vijayan")
 q2 = st.text_input("Enter Politician 2", "Yogi Adityanath")
@@ -154,8 +164,13 @@ if st.button("Fetch & Analyze"):
             st.error("No articles found. Try different keywords.")
         else:
             p_texts, y_texts, lda_p, lda_y = load_models_dynamic(texts1, texts2)
-            st.session_state["data"] = (p_texts, y_texts, lda_p, lda_y)
 
+            if lda_p is None or lda_y is None:
+                st.error("Not enough usable data for topic modelling.")
+            else:
+                st.session_state["data"] = (p_texts, y_texts, lda_p, lda_y)
+
+# Stop until data exists
 if "data" not in st.session_state:
     st.stop()
 
@@ -169,10 +184,11 @@ def show_topics(model):
         st.warning("Not enough data")
         return
     for i, topic in model.print_topics():
-        st.write(topic)
+        st.write(f"Topic {i}: {topic}")
 
 def wordcloud(texts):
     if not texts:
+        st.warning("No data for wordcloud")
         return
     wc = WordCloud().generate(" ".join([" ".join(t) for t in texts]))
     plt.imshow(wc)
@@ -181,9 +197,10 @@ def wordcloud(texts):
 
 def venn(p, y):
     if not p or not y:
+        st.warning("Not enough data for comparison")
         return
     fig, ax = plt.subplots()
-    venn2([set(sum(p, [])), set(sum(y, []))], ("P1", "P2"))
+    venn2([set(sum(p, [])), set(sum(y, []))], ("Politician 1", "Politician 2"))
     st.pyplot(fig)
 
 view = st.sidebar.selectbox("View", ["Topics", "Wordcloud", "Venn Diagram"])
@@ -203,8 +220,16 @@ if view == "Topics":
         show_topics(lda_y)
 
 elif view == "Wordcloud":
-    wordcloud(p_texts)
-    wordcloud(y_texts)
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.subheader(f"🟦 {q1}")
+        wordcloud(p_texts)
+
+    with col2:
+        st.subheader(f"🟥 {q2}")
+        wordcloud(y_texts)
 
 else:
+    st.subheader("Vocabulary Comparison")
     venn(p_texts, y_texts)
