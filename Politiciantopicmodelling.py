@@ -29,51 +29,107 @@ def set_background(image_file):
     page_bg = f"""
     <style>
 
-    /* Background image */
-    .stApp::before {{
-        content: "";
-        position: fixed;
-        inset: 0;
-        background: url("data:image/jpg;base64,{data}") no-repeat center center;
-        background-size: cover;
-        filter: blur(3px);
-        z-index: 0;
-    }}
+/* ========================= */
+/* BACKGROUND                */
+/* ========================= */
 
-    /* Light overlay */
-    .stApp::after {{
-        content: "";
-        position: fixed;
-        inset: 0;
-        background: rgba(255, 255, 255, 0.8);
-        z-index: 1;
-    }}
+.stApp::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: url("data:image/jpg;base64,{data}") no-repeat center center;
+    background-size: cover;
+    filter: blur(3px);
+    z-index: 0;
+}
 
-    /* Bring content forward */
-    .stApp > * {{
-        position: relative;
-        z-index: 2;
-    }}
+.stApp::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.8);
+    z-index: 1;
+}
 
-    /* 🔥 FIX TEXT VISIBILITY */
-    h1, h2, h3, h4, h5, h6, p, span, label, div {{
-        color: #111111 !important;
-    }}
+.stApp > * {
+    position: relative;
+    z-index: 2;
+}
 
-    /* Sidebar text */
-    section[data-testid="stSidebar"] * {{
-        color: #111111 !important;
-    }}
-    button, input, textarea, select {{
+/* ========================= */
+/* MAIN TEXT (DARK)          */
+/* ========================= */
+
+h1, h2, h3, h4, h5, h6, p, span {
+    color: #111111 !important;
+}
+
+/* IMPORTANT: don't override EVERYTHING */
+div {
+    color: inherit !important;
+}
+
+/* ========================= */
+/* SIDEBAR (WHITE TEXT)      */
+/* ========================= */
+
+section[data-testid="stSidebar"] {
+    background-color: rgba(0, 0, 0, 0.25);
+}
+
+section[data-testid="stSidebar"] * {
     color: white !important;
-    background-color: #1f2937 !important;  /* dark grey */
-    border-radius: 6px;
-    }}
-    div[data-baseweb="select"] * {{
+}
+
+/* Sidebar label ("View") */
+section[data-testid="stSidebar"] label {
+    color: white !important;
+}
+
+/* ========================= */
+/* BUTTONS                   */
+/* ========================= */
+
+button[kind="primary"] {
     color: white !important;
     background-color: #1f2937 !important;
-    }}
-    </style>
+    border-radius: 6px;
+}
+
+button * {
+    color: white !important;
+}
+
+/* ========================= */
+/* INPUTS                    */
+/* ========================= */
+
+input, textarea {
+    color: white !important;
+    background-color: #1f2937 !important;
+}
+
+/* ========================= */
+/* DROPDOWN (SELECTBOX)      */
+/* ========================= */
+
+div[data-baseweb="select"] * {
+    color: white !important;
+    background-color: #1f2937 !important;
+}
+
+/* Selected value */
+div[data-baseweb="select"] span {
+    color: white !important;
+}
+
+/* Dropdown options */
+ul[role="listbox"] li {
+    color: white !important;
+    background-color: #1f2937 !important;
+}
+
+</style>
     """
 
     st.markdown(page_bg, unsafe_allow_html=True)
