@@ -153,11 +153,21 @@ def venn(p, y):
     venn2([set(sum(p, [])), set(sum(y, []))], ("P1", "P2"))
     st.pyplot(fig)
 
-view = st.sidebar.selectbox("View", ["Topics", "Wordcloud", "Compare"])
+view = st.sidebar.selectbox("View", ["Topics", "Wordcloud", "Venn Diagram"])
 
 if view == "Topics":
-    show_topics(lda_p)
-    show_topics(lda_y)
+    st.subheader("Topic Comparison")
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.subheader(f"🟦 {q1}")
+        st.markdown("---")
+        show_topics(lda_p)
+
+    with col2:
+        st.subheader(f"🟥 {q2}")
+        st.markdown("---")
+        show_topics(lda_y)
 
 elif view == "Wordcloud":
     wordcloud(p_texts)
