@@ -40,7 +40,7 @@ def set_background(image_file):
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(255, 255, 255, 0.85);  /* adjust fade here */
+        background: rgba(255, 255, 255, 0.25);  /* adjust fade here */
         z-index: -1;
     }}
     </style>
