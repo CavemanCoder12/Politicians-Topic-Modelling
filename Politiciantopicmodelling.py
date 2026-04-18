@@ -64,7 +64,9 @@ def set_background(image_file):
     section[data-testid="stSidebar"] * {{
         color: #111111 !important;
     }}
-
+    button, input, textarea, select {{
+    color: black !important;
+    }}
     </style>
     """
 
