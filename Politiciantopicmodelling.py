@@ -45,7 +45,7 @@ def set_background(image_file):
         content: "";
         position: fixed;
         inset: 0;
-        background: rgba(255, 255, 255, 0.5);
+        background: rgba(255, 255, 255, 0.8);
         z-index: 1;
     }}
 
